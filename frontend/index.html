@@ -8,7 +8,7 @@
   <body>
     <div id="app">
       <h1>S3 Uploader Test</h1>
-  
+
       <div v-if="!image">
         <h2>Select an image</h2>
         <input type="file" @change="onFileChange" accept="image/jpeg">
@@ -20,13 +20,13 @@
       </div>
       <h2 v-if="uploadURL">Success! Image uploaded to bucket.</h2>
     </div>
-  
+
     <script>
-      const MAX_IMAGE_SIZE = 1000000
+      const MAX_IMAGE_SIZE = 10 * 1024 * 1024 * 1024
 
       /* ENTER YOUR ENDPOINT HERE */
 
-      const API_ENDPOINT = '<< ENTER HERE >>' // e.g. https://ab1234ab123.execute-api.us-east-1.amazonaws.com/uploads
+      const API_ENDPOINT = '' // e.g. https://ab1234ab123.execute-api.us-east-1.amazonaws.com/uploads
 
       new Vue({
         el: "#app",

@@ -1,8 +1,8 @@
 version = 0.1
 [default.deploy.parameters]
-stack_name = "new3"
+stack_name = "final"
 resolve_s3 = true
-s3_prefix = "new3"
+s3_prefix = "final"
 region = "eu-central-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"

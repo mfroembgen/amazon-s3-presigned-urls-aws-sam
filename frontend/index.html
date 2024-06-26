@@ -1,124 +1,333 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Upload file to S3</title>
-    <script src="https://unpkg.com/vue@1.0.28/dist/vue.js"></script>
-    <script src="https://unpkg.com/axios@0.2.1/dist/axios.min.js"></script>
-  </head>
-  <body>
-    <div id="app">
-      <h1>S3 Uploader Test</h1>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charlotte & Christopher's Wedding Media Upload</title>
+    <script src="https://unpkg.com/vue@3.2.31/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios@0.26.1/dist/axios.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Roboto:wght@300;400&display=swap');
 
-      <div v-if="!image">
-        <h2>Select an image</h2>
-        <input type="file" @change="onFileChange" accept="image/jpeg">
-      </div>
-      <div v-else>
-        <img :src="image" />
-        <button v-if="!uploadURL" @click="removeImage">Remove image</button>
-        <button v-if="!uploadURL" @click="uploadImage">Upload image</button>
-      </div>
-      <h2 v-if="uploadURL">Success! Image uploaded to bucket.</h2>
-    </div>
-
-    <script>
-      const MAX_IMAGE_SIZE = 10 * 1024 * 1024 * 1024
-
-      /* ENTER YOUR ENDPOINT HERE */
-
-      const API_ENDPOINT = '' // e.g. https://ab1234ab123.execute-api.us-east-1.amazonaws.com/uploads
-
-      new Vue({
-        el: "#app",
-        data: {
-          image: '',
-          uploadURL: ''
-        },
-        methods: {
-          onFileChange (e) {
-            let files = e.target.files || e.dataTransfer.files
-            if (!files.length) return
-            this.createImage(files[0])
-          },
-          createImage (file) {
-            // var image = new Image()
-            let reader = new FileReader()
-            reader.onload = (e) => {
-              console.log('length: ', e.target.result.includes('data:image/jpeg'))
-              if (!e.target.result.includes('data:image/jpeg')) {
-                return alert('Wrong file type - JPG only.')
-              }
-              if (e.target.result.length > MAX_IMAGE_SIZE) {
-                return alert('Image is loo large.')
-              }
-              this.image = e.target.result
-            }
-            reader.readAsDataURL(file)
-          },
-          removeImage: function (e) {
-            console.log('Remove clicked')
-            this.image = ''
-          },
-          uploadImage: async function (e) {
-            console.log('Upload clicked')
-            // Get the presigned URL
-            const response = await axios({
-              method: 'GET',
-              url: API_ENDPOINT
-            })
-            console.log('Response: ', response)
-            console.log('Uploading: ', this.image)
-            let binary = atob(this.image.split(',')[1])
-            let array = []
-            for (var i = 0; i < binary.length; i++) {
-              array.push(binary.charCodeAt(i))
-            }
-            let blobData = new Blob([new Uint8Array(array)], {type: 'image/jpeg'})
-            console.log('Uploading to: ', response.uploadURL)
-            const result = await fetch(response.uploadURL, {
-              method: 'PUT',
-              body: blobData
-            })
-            console.log('Result: ', result)
-            // Final URL for the user doesn't need the query string params
-            this.uploadURL = response.uploadURL.split('?')[0]
-          }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f9f7f5;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
-      })
-    </script>
-    <style type="text/css">
-      body {
-        background: #20262E;
-        padding: 20px;
-        font-family: sans-serif;
-      }
-      #app {
-        background: #fff;
-        border-radius: 4px;
-        padding: 20px;
-        transition: all 0.2s;
-        text-align: center;
-      }
-      #logo {
-        width: 100px;
-      }
-      h2 {
-        font-weight: bold;
-        margin-bottom: 15px;
-      }
-      h1, h2 {
-        font-weight: normal;
-        margin-bottom: 15px;
-      }
-      a {
-        color: #42b983;
-      }
-      img {
-        width: 30%;
-        margin: auto;
-        display: block;
-        margin-bottom: 10px;
-      }
+        #app {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            font-family: 'Playfair Display', serif;
+            color: #3a3a3a;
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        h2 {
+            font-family: 'Playfair Display', serif;
+            color: #5a5a5a;
+            font-size: 22px;
+            font-weight: 400;
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .file-input-label {
+            border: 2px solid #8e7cc3;
+            color: #8e7cc3;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-block;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+        .file-input-label:hover {
+            background-color: #8e7cc3;
+            color: #ffffff;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background-color: #f9f7f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            font-size: 14px;
+        }
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: transparent;
+            border: 1px solid #8e7cc3;
+            color: #8e7cc3;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-family: 'Roboto', sans-serif;
+        }
+        button:hover {
+            background-color: #8e7cc3;
+            color: #ffffff;
+        }
+        .upload-button {
+            background-color: #8e7cc3;
+            color: #ffffff;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-block;
+            transition: all 0.3s;
+            font-size: 16px;
+            border: none;
+        }
+        .upload-button:hover {
+            background-color: #7c69b3;
+        }
+        .success-message {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 16px;
+            border: 1px solid #c8e6c9;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .progress {
+            width: 0;
+            height: 5px;
+            background-color: #8e7cc3;
+            transition: width 0.3s ease;
+        }
+        .language-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            background-color: #8e7cc3;
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .wedding-date {
+            text-align: center;
+            font-family: 'Playfair Display', serif;
+            color: #8e7cc3;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
     </style>
-  </body>
+</head>
+<body>
+<div id="app">
+    <div class="language-toggle" @click="toggleLanguage">{{ currentLanguage === 'en' ? 'DE' : 'EN' }}</div>
+    <h1>{{ t('pageTitle') }}</h1>
+    <div class="wedding-date">{{ t('weddingDate') }}</div>
+
+    <div>
+        <h2>{{ t('shareMemories') }}</h2>
+        <label class="file-input-label">
+            {{ t('selectFiles') }}
+            <input type="file" @change="onFileChange" accept="image/*,video/*" multiple>
+        </label>
+    </div>
+    <div v-if="files.length > 0">
+        <h2>{{ t('selectedFiles') }}</h2>
+        <ul>
+            <li v-for="(file, index) in files" :key="index">
+                <div class="file-info">
+                    {{ file.name }}
+                    <button @click="removeFile(index)" :disabled="file.uploading">{{ t('remove') }}</button>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress" :style="{ width: file.progress + '%' }"></div>
+                </div>
+                <div v-if="file.error" style="color: red; font-size: 12px; margin-top: 5px;">
+                    {{ file.error }}
+                </div>
+            </li>
+        </ul>
+        <button @click="uploadFiles" class="upload-button" :disabled="isUploading">
+            {{ isUploading ? t('uploading') : t('uploadFiles') }}
+        </button>
+    </div>
+    <div v-if="showSuccessMessage" class="success-message">
+        {{ t('thankYou') }}
+    </div>
+</div>
+
+<script>
+    const { createApp, ref, computed } = Vue;
+    const MAX_FILE_SIZE = 1024 * 1024 * 1024 * 10; // 10GB
+    const API_ENDPOINT = '/uploads';
+
+    const translations = {
+        en: {
+            pageTitle: 'Charlotte & Christopher\'s Wedding',
+            weddingDate: 'June 28, 2024',
+            shareMemories: 'Share Your Memories',
+            selectFiles: 'Select Files',
+            selectedFiles: 'Selected files:',
+            remove: 'Remove',
+            uploadFiles: 'Upload Files',
+            uploading: 'Uploading...',
+            thankYou: 'Thank you for sharing your memories!',
+            fileTooLarge: 'File is too large.',
+            uploadFailed: 'Failed to upload file:'
+        },
+        de: {
+            pageTitle: 'Charlottes & Christophers Hochzeit',
+            weddingDate: '28. Juni 2024',
+            shareMemories: 'Teilen Sie Ihre Erinnerungen',
+            selectFiles: 'Dateien auswählen',
+            selectedFiles: 'Ausgewählte Dateien:',
+            remove: 'Entfernen',
+            uploadFiles: 'Dateien hochladen',
+            uploading: 'Hochladen...',
+            thankYou: 'Vielen Dank, dass Sie Ihre Erinnerungen teilen!',
+            fileTooLarge: 'Datei ist zu groß.',
+            uploadFailed: 'Fehler beim Hochladen der Datei:'
+        }
+    };
+
+    createApp({
+        setup() {
+            const files = ref([]);
+            const showSuccessMessage = ref(false);
+            const currentLanguage = ref('en');
+
+            const t = (key) => translations[currentLanguage.value][key];
+
+            const toggleLanguage = () => {
+                currentLanguage.value = currentLanguage.value === 'en' ? 'de' : 'en';
+            };
+
+            const generateUniqueId = () => {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+            };
+
+            const onFileChange = (e) => {
+                const selectedFiles = e.target.files || e.dataTransfer.files;
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    if (selectedFiles[i].size <= MAX_FILE_SIZE) {
+                        const uniqueId = generateUniqueId();
+                        const fileName = `${selectedFiles[i].name.split('.').slice(0, -1).join('.')}_${uniqueId}.${selectedFiles[i].name.split('.').pop()}`;
+                        files.value.push({
+                            file: selectedFiles[i],
+                            name: fileName,
+                            progress: 0,
+                            uploading: false,
+                            error: null
+                        });
+                    } else {
+                        alert(`${selectedFiles[i].name}: ${t('fileTooLarge')}`);
+                    }
+                }
+            };
+
+            const removeFile = (index) => {
+                files.value.splice(index, 1);
+            };
+
+            const uploadFile = async (fileObj) => {
+                fileObj.uploading = true;
+                fileObj.error = null;
+
+                try {
+                    const response = await axios.get(API_ENDPOINT, {
+                        params: {
+                            fileName: fileObj.name,
+                            contentType: fileObj.file.type
+                        }
+                    });
+
+                    if (response.status !== 200) {
+                        throw new Error(`Failed to get signed URL: ${response.status}`);
+                    }
+
+                    const uploadURL = response.data.uploadURL;
+
+                    await axios.put(uploadURL, fileObj.file, {
+                        headers: { 'Content-Type': fileObj.file.type },
+                        onUploadProgress: (progressEvent) => {
+                            fileObj.progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        }
+                    });
+
+                    fileObj.progress = 100;
+                } catch (error) {
+                    console.error('Error uploading file:', error);
+                    fileObj.error = `${t('uploadFailed')} ${error.message}`;
+                } finally {
+                    fileObj.uploading = false;
+                }
+            };
+
+            const uploadFiles = async () => {
+                showSuccessMessage.value = false;
+                const uploadPromises = files.value.map(uploadFile);
+                await Promise.all(uploadPromises);
+
+                const allUploadsSuccessful = files.value.every(file => file.progress === 100 && !file.error);
+                if (allUploadsSuccessful) {
+                    showSuccessMessage.value = true;
+                    files.value = [];
+                }
+            };
+
+            const isUploading = computed(() => files.value.some(file => file.uploading));
+
+            return {
+                files,
+                showSuccessMessage,
+                currentLanguage,
+                t,
+                toggleLanguage,
+                onFileChange,
+                removeFile,
+                uploadFiles,
+                isUploading
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
 </html>
